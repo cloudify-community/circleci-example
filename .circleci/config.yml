@@ -1,0 +1,79 @@
+version: 2.1
+orbs:
+  aws-s3: circleci/aws-s3@1.0.16
+  cfy-ci: cloudify/cfy@dev:first
+jobs:
+  simple-test:
+    executor: cfy-ci/default
+    steps:
+      - checkout
+      - cfy-ci/create:
+          environment_name: test-app-${CIRCLE_BUILD_NUM}
+          blueprint: simple/blueprints/simple/blueprint.yaml
+          outputs_file: env-data.json
+      - run:
+          name: Print Environment Data
+          command: |
+            cat env-data.json | jq
+      - cfy-ci/delete:
+          environment_name: test-app-${CIRCLE_BUILD_NUM}
+  arm-test:
+    executor: cfy-ci/default
+    steps:
+      - checkout
+      - cfy-ci/arm:
+          environment_name: arm-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
+          resource_group: circlearmrg${CIRCLE_BUILD_NUM}
+          template_file: arm/environment.json
+          parameters_file: arm/test-params/integration.yaml
+          outputs_file: env-data.json
+      - run:
+          name: Print Environment Data
+          command: |
+            cat env-data.json | jq
+      - cfy-ci/delete:
+          environment_name: arm-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
+  cfn-test:
+    executor: cfy-ci/default
+    steps:
+      - checkout
+      - aws-s3/copy:
+          from: cfn/stack.yaml
+          to: 's3://two-tier-example-cf/cfn-example-circleci.yaml'
+      - cfy-ci/cfn:
+          environment_name: cfn-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
+          stack_name: circlecfnstack${CIRCLE_BUILD_NUM}
+          template_url: https://two-tier-example-cf.s3-eu-west-1.amazonaws.com/cfn-example-circleci.yaml
+          parameters_file: cfn/test-params/integration.yaml
+          outputs_file: env-data.json
+      - run:
+          name: Print Environment Data
+          command: |
+            cat env-data.json | jq
+      - cfy-ci/delete:
+          environment_name: cfn-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
+  k8s-test:
+    executor: cfy-ci/default
+    steps:
+      - checkout
+      - cfy-ci/kubernetes:
+          environment_name: k8s-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
+          token: ${KUBERNETES_TOKEN}
+          master_host: ${KUBERNETES_MASTER_HOST}
+          namespace: default
+          app_definition_file: k8s/app.yaml
+          skip_ssl_verification: true
+          outputs_file: env-data.json
+      - run:
+          name: Print Environment Data
+          command: |
+            cat env-data.json | jq
+      - cfy-ci/delete:
+          environment_name: k8s-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
+workflows:
+  build:
+    jobs:
+      - simple-test
+      - arm-test
+      - cfn-test
+      - k8s-test
