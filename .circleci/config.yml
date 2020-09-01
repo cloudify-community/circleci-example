@@ -24,6 +24,7 @@ jobs:
       - cfy-ci/arm:
           environment_name: arm-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
           resource_group: circlearmrg${CIRCLE_BUILD_NUM}
+          location: centralus
           template_file: arm/environment.json
           parameters_file: arm/test-params/integration.yaml
           outputs_file: env-data.json
@@ -39,11 +40,11 @@ jobs:
       - checkout
       - aws-s3/copy:
           from: cfn/stack.yaml
-          to: 's3://cloudify-cicd/cfn-example-circleci.yaml'
+          to: 's3://cloudify-cicd-public/cfn-example-circleci.yaml'
       - cfy-ci/cfn:
           environment_name: cfn-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
           stack_name: circlecfnstack${CIRCLE_BUILD_NUM}
-          template_url: https://cloudify-cicd.s3-us-east-1.amazonaws.com/cfn-example-circleci.yaml
+          template_url: https://cloudify-cicd.s3.amazonaws.com/cfn-example-circleci.yaml
           parameters_file: cfn/test-params/integration.yaml
           outputs_file: env-data.json
       - run:
@@ -100,8 +101,8 @@ jobs:
 workflows:
   build:
     jobs:
-#      - simple
-#      - arm
-#      - cloudformation
-#      - kubernetes
-      - terraform
+      - simple
+      - arm
+      - cloudformation
+      - kubernetes
+#      - terraform
