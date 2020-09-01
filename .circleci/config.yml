@@ -3,7 +3,7 @@ orbs:
   aws-s3: circleci/aws-s3@1.0.16
   cfy-ci: cloudify/cfy@dev:first
 jobs:
-  simple-test:
+  simple:
     executor: cfy-ci/default
     steps:
       - checkout
@@ -17,7 +17,7 @@ jobs:
             cat env-data.json | jq
       - cfy-ci/delete:
           environment_name: test-app-${CIRCLE_BUILD_NUM}
-  arm-test:
+  arm:
     executor: cfy-ci/default
     steps:
       - checkout
@@ -33,7 +33,7 @@ jobs:
             cat env-data.json | jq
       - cfy-ci/delete:
           environment_name: arm-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
-  cfn-test:
+  cloudformation:
     executor: cfy-ci/default
     steps:
       - checkout
@@ -52,7 +52,7 @@ jobs:
             cat env-data.json | jq
       - cfy-ci/delete:
           environment_name: cfn-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
-  k8s-test:
+  kubernetes:
     executor: cfy-ci/default
     steps:
       - checkout
@@ -70,10 +70,27 @@ jobs:
             cat env-data.json | jq
       - cfy-ci/delete:
           environment_name: k8s-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
+  terraform:
+    executor: cfy-ci/default
+    steps:
+      - checkout
+      - cfy-ci/terraform:
+          environment_name: tf-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
+          module_file: https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/archive/${CIRCLE_BRANCH}.tar.gz
+          variables_file: tf/test-params/integration.yaml
+          environment_mapping: AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+          outputs_file: env-data.json
+      - run:
+          name: Print Environment Data
+          command: |
+            cat env-data.json | jq
+      - cfy-ci/delete:
+          environment_name: tf-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
 workflows:
   build:
     jobs:
-      - simple-test
-      - arm-test
-      - cfn-test
-      - k8s-test
+      - simple
+      - arm
+      - cloudformation
+      - kubernetes
+      - terraform
