@@ -39,11 +39,11 @@ jobs:
       - checkout
       - aws-s3/copy:
           from: cfn/stack.yaml
-          to: 's3://two-tier-example-cf/cfn-example-circleci.yaml'
+          to: 's3://cloudify-cicd/cfn-example-circleci.yaml'
       - cfy-ci/cfn:
           environment_name: cfn-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
           stack_name: circlecfnstack${CIRCLE_BUILD_NUM}
-          template_url: https://two-tier-example-cf.s3-eu-west-1.amazonaws.com/cfn-example-circleci.yaml
+          template_url: https://cloudify-cicd.s3-us-east-1.amazonaws.com/cfn-example-circleci.yaml
           parameters_file: cfn/test-params/integration.yaml
           outputs_file: env-data.json
       - run:
@@ -74,9 +74,20 @@ jobs:
     executor: cfy-ci/default
     steps:
       - checkout
+      - run:
+          command: pwd
+      - run:
+          command: find .
+      - run:
+          name: Archive Terraform files
+          command: |
+            tar -cvzf /tmp/terraform-module.tar.gz -C tf/modules/ *
+      - aws-s3/copy:
+          from: /tmp/terraform-module.tar.gz
+          to: 's3://cloudify-cicd/terraform-module.tar.gz'
       - cfy-ci/terraform:
           environment_name: tf-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
-          module_file: https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/archive/${CIRCLE_BRANCH}.tar.gz
+          module_file: https://cloudify-cicd.s3-us-east-1.amazonaws.com/terraform-module.tar.gz
           variables_file: tf/test-params/integration.yaml
           environment_mapping: AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
           outputs_file: env-data.json
@@ -89,8 +100,8 @@ jobs:
 workflows:
   build:
     jobs:
-      - simple
-      - arm
-      - cloudformation
-      - kubernetes
+#      - simple
+#      - arm
+#      - cloudformation
+#      - kubernetes
       - terraform
