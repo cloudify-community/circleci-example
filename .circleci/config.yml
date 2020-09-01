@@ -81,7 +81,7 @@ jobs:
       - run:
           name: Archive Terraform files
           command: |
-            tar -cvzf /tmp/terraform-module.tar.gz -C tf/modules/ *
+            tar -cvzf /tmp/terraform-module.tar.gz -C tf/modules/ .
       - aws-s3/copy:
           from: /tmp/terraform-module.tar.gz
           to: 's3://cloudify-cicd/terraform-module.tar.gz'
