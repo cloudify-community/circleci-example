@@ -87,7 +87,7 @@ jobs:
           to: 's3://cloudify-cicd/terraform-module.tar.gz'
       - cfy-ci/terraform:
           environment_name: tf-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
-          module_file: https://cloudify-cicd.s3-us-east-1.amazonaws.com/terraform-module.tar.gz
+          module_file: https://cloudify-cicd.s3.amazonaws.com/terraform-module.tar.gz
           variables_file: tf/test-params/integration.yaml
           environment_mapping: AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
           outputs_file: env-data.json
