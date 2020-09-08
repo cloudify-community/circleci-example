@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   aws-s3: circleci/aws-s3@1.0.16
-  cfy-ci: cloudify/cfy@dev:first
+  cfy-ci: cloudify/cfy@1.0.0
 jobs:
   simple:
     executor: cfy-ci/default
@@ -10,11 +10,9 @@ jobs:
       - cfy-ci/create:
           environment_name: test-app-${CIRCLE_BUILD_NUM}
           blueprint: simple/blueprints/simple/blueprint.yaml
-          outputs_file: env-data.json
-      - run:
-          name: Print Environment Data
-          command: |
-            cat env-data.json | jq
+          outputs_file: simple-env-data.json
+      - store_artifacts:
+          path: simple-env-data.json
       - cfy-ci/delete:
           environment_name: test-app-${CIRCLE_BUILD_NUM}
   arm:
@@ -27,30 +25,23 @@ jobs:
           location: centralus
           template_file: arm/environment.json
           parameters_file: arm/test-params/integration.yaml
-          outputs_file: env-data.json
-      - run:
-          name: Print Environment Data
-          command: |
-            cat env-data.json | jq
+          outputs_file: arm-env-data.json
+      - store_artifacts:
+          path: arm-env-data.json
       - cfy-ci/delete:
           environment_name: arm-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
   cloudformation:
     executor: cfy-ci/default
     steps:
       - checkout
-      - aws-s3/copy:
-          from: cfn/stack.yaml
-          to: 's3://cloudify-cicd-public/cfn-example-circleci.yaml'
       - cfy-ci/cfn:
           environment_name: cfn-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
           stack_name: circlecfnstack${CIRCLE_BUILD_NUM}
-          template_url: https://cloudify-cicd.s3.amazonaws.com/cfn-example-circleci.yaml
+          template_file: cfn/stack.yaml
           parameters_file: cfn/test-params/integration.yaml
-          outputs_file: env-data.json
-      - run:
-          name: Print Environment Data
-          command: |
-            cat env-data.json | jq
+          outputs_file: cfn-env-data.json
+      - store_artifacts:
+          path: cfn-env-data.json
       - cfy-ci/delete:
           environment_name: cfn-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
   kubernetes:
@@ -64,11 +55,9 @@ jobs:
           namespace: default
           app_definition_file: k8s/app.yaml
           skip_ssl_verification: true
-          outputs_file: env-data.json
-      - run:
-          name: Print Environment Data
-          command: |
-            cat env-data.json | jq
+          outputs_file: k8s-env-data.json
+      - store_artifacts:
+          path: k8s-env-data.json
       - cfy-ci/delete:
           environment_name: k8s-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
   terraform:
@@ -76,26 +65,20 @@ jobs:
     steps:
       - checkout
       - run:
-          command: pwd
-      - run:
-          command: find .
-      - run:
           name: Archive Terraform files
           command: |
             tar -cvzf /tmp/terraform-module.tar.gz -C tf/modules/ .
       - aws-s3/copy:
           from: /tmp/terraform-module.tar.gz
-          to: 's3://cloudify-cicd/terraform-module.tar.gz'
+          to: 's3://cloudify-cicd-public/terraform-module.tar.gz'
       - cfy-ci/terraform:
           environment_name: tf-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
-          module_file: https://cloudify-cicd.s3.amazonaws.com/terraform-module.tar.gz
+          module_file: https://cloudify-cicd-public.s3.amazonaws.com/terraform-module.tar.gz
           variables_file: tf/test-params/integration.yaml
           environment_mapping: AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
-          outputs_file: env-data.json
-      - run:
-          name: Print Environment Data
-          command: |
-            cat env-data.json | jq
+          outputs_file: terraform-env-data.json
+      - store_artifacts:
+          path: terraform-env-data.json
       - cfy-ci/delete:
           environment_name: tf-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
 workflows:
@@ -105,4 +88,4 @@ workflows:
       - arm
       - cloudformation
       - kubernetes
-#      - terraform
+      - terraform
