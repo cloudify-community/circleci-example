@@ -1,14 +1,10 @@
 version: 2.1
 orbs:
-  aws-s3: circleci/aws-s3@1.0.16
+  aws-s3: circleci/aws-s3@2.0.0
   cfy-ci: cloudify/cfy@1.0.0
 jobs:
   simple:
     executor: cfy-ci/default
-    docker:
-      - auth:
-          username: $DOCKERHUB_USERNAME
-          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - cfy-ci/create:
@@ -21,10 +17,6 @@ jobs:
           environment_name: test-app-${CIRCLE_BUILD_NUM}
   arm:
     executor: cfy-ci/default
-    docker:
-      - auth:
-          username: $DOCKERHUB_USERNAME
-          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - cfy-ci/arm:
@@ -40,10 +32,6 @@ jobs:
           environment_name: arm-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
   cloudformation:
     executor: cfy-ci/default
-    docker:
-      - auth:
-          username: $DOCKERHUB_USERNAME
-          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - cfy-ci/cfn:
@@ -58,10 +46,6 @@ jobs:
           environment_name: cfn-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
   kubernetes:
     executor: cfy-ci/default
-    docker:
-      - auth:
-          username: $DOCKERHUB_USERNAME
-          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - cfy-ci/kubernetes:
@@ -78,16 +62,17 @@ jobs:
           environment_name: k8s-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
   terraform:
     executor: cfy-ci/default
-    docker:
-      - auth:
-          username: $DOCKERHUB_USERNAME
-          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - run:
           name: Archive Terraform files
           command: |
             tar -cvzf /tmp/terraform-module.tar.gz -C tf/modules/ .
+      - run:
+          name: Install 'sudo' (required for aws-s3)
+          command: |
+            apk add --no-cache sudo
+            pip install --no-cache-dir awscli
       - aws-s3/copy:
           from: /tmp/terraform-module.tar.gz
           to: 's3://cloudify-cicd-public/terraform-module.tar.gz'
