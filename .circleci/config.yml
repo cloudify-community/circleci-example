@@ -5,6 +5,10 @@ orbs:
 jobs:
   simple:
     executor: cfy-ci/default
+    docker:
+      - auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - cfy-ci/create:
@@ -17,6 +21,10 @@ jobs:
           environment_name: test-app-${CIRCLE_BUILD_NUM}
   arm:
     executor: cfy-ci/default
+    docker:
+      - auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - cfy-ci/arm:
@@ -32,6 +40,10 @@ jobs:
           environment_name: arm-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
   cloudformation:
     executor: cfy-ci/default
+    docker:
+      - auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - cfy-ci/cfn:
@@ -46,6 +58,10 @@ jobs:
           environment_name: cfn-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
   kubernetes:
     executor: cfy-ci/default
+    docker:
+      - auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - cfy-ci/kubernetes:
@@ -62,6 +78,10 @@ jobs:
           environment_name: k8s-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM}
   terraform:
     executor: cfy-ci/default
+    docker:
+      - auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - run:
