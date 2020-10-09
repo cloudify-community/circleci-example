@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   aws-s3: circleci/aws-s3@2.0.0
-  cfy-ci: cloudify/cfy@1.0.0
+  cfy-ci: cloudify/cfy@dev:1.0.1
 jobs:
   simple:
     executor: cfy-ci/default
@@ -68,11 +68,6 @@ jobs:
           name: Archive Terraform files
           command: |
             tar -cvzf /tmp/terraform-module.tar.gz -C tf/modules/ .
-      - run:
-          name: Install 'sudo' (required for aws-s3)
-          command: |
-            apk add --no-cache sudo
-            pip install --no-cache-dir awscli
       - aws-s3/copy:
           from: /tmp/terraform-module.tar.gz
           to: 's3://cloudify-cicd-public/terraform-module.tar.gz'
