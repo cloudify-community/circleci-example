@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   aws-s3: circleci/aws-s3@2.0.0
-  cfy-ci: cloudify/cfy@1.0.1
+  cfy-ci: cloudify/cfy@dev:1.0.2
 jobs:
   simple:
     executor: cfy-ci/default
